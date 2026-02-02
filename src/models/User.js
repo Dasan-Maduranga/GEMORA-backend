@@ -1,3 +1,8 @@
+/**
+ * User model
+ * Defines schema for user accounts with authentication fields
+ */
+
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
