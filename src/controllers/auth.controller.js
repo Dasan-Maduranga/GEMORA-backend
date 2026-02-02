@@ -58,3 +58,81 @@ exports.login = async (req, res, next) => {
     next(err);
   }
 };
+
+// Get current user profile
+exports.getProfile = async (req, res, next) => {
+  try {
+    res.json({
+      user: {
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+        createdAt: req.user.createdAt,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Update user role (Admin only)
+exports.updateUserRole = async (req, res, next) => {
+  try {
+    const { userId, role } = req.body;
+
+    // Validate role
+    if (!["user", "admin"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role. Must be 'user' or 'admin'" });
+    }
+
+    // Update user role
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { role },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "User role updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// List all users (Admin only)
+exports.getAllUsers = async (req, res, next) => {
+  try {
+    const users = await User.find().select("-password");
+    res.json({ users });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get specific user by ID (Admin or self)
+exports.getUserById = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    
+    const user = await User.findById(userId).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+};
