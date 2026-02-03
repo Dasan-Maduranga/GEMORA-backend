@@ -16,14 +16,14 @@ const {
 const { verifyToken } = require("../middleware/auth.middleware");
 const { authorize } = require("../middleware/authorization.middleware");
 
+// Admin routes - must come before /:id route
+router.get("/", verifyToken, authorize(["admin"]), getAllOrders);
+router.put("/:id/status", verifyToken, authorize(["admin"]), updateOrderStatus);
+
 // User routes - requires authentication
 router.post("/", verifyToken, createOrder);
 router.get("/myorders", verifyToken, getMyOrders);
 router.get("/:id", verifyToken, getOrderById);
 router.put("/:id/pay", verifyToken, updateOrderPayment);
-
-// Admin routes
-router.get("/", verifyToken, authorize(["admin"]), getAllOrders);
-router.put("/:id/status", verifyToken, authorize(["admin"]), updateOrderStatus);
 
 module.exports = router;

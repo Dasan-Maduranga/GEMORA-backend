@@ -41,7 +41,7 @@ exports.createOrder = async (req, res) => {
         await Gem.findByIdAndUpdate(item.productId, {
           $inc: { countInStock: -item.quantity },
         });
-      } else if (item.productType === "Tool") {
+      } else if (item.productType === "Tool" || item.productType === "Instrument") {
         await Tool.findByIdAndUpdate(item.productId, {
           $inc: { countInStock: -item.quantity },
         });
@@ -98,8 +98,11 @@ exports.getAllOrders = async (req, res) => {
     const orders = await Order.find({})
       .populate("user", "name email")
       .sort({ createdAt: -1 });
+    
+    console.log(`✅ Found ${orders.length} orders in database`);
     res.json(orders);
   } catch (error) {
+    console.error("❌ Error fetching orders:", error.message);
     res.status(500).json({ message: error.message });
   }
 };

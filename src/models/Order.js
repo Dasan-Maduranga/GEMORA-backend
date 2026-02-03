@@ -18,7 +18,7 @@ const orderSchema = new mongoose.Schema(
         quantity: { type: Number, required: true },
         price: { type: Number, required: true },
         productId: { type: mongoose.Schema.Types.ObjectId, required: true },
-        productType: { type: String, enum: ["Gem", "Tool"], required: true },
+        productType: { type: String, enum: ["Gem", "Tool", "Instrument"], required: true },
         imageUrl: { type: String },
       },
     ],
