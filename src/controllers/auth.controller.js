@@ -62,15 +62,9 @@ exports.login = async (req, res, next) => {
 // Get current user profile
 exports.getProfile = async (req, res, next) => {
   try {
-    res.json({
-      user: {
-        id: req.user._id,
-        name: req.user.name,
-        email: req.user.email,
-        role: req.user.role,
-        createdAt: req.user.createdAt,
-      },
-    });
+    // Fetching the latest data directly from the DB
+    const user = await User.findById(req.user._id).select("-password");
+    res.json({ user }); // This sends the user data back to React
   } catch (err) {
     next(err);
   }
