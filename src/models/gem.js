@@ -15,7 +15,8 @@ const gemSchema = new mongoose.Schema(
     countInStock: { type: Number, required: true, default: 1 },
     images: [{ type: String }], // 👈 Array of image URLs
     description: { type: String },
-    isApproved: { type: Boolean, default: false }
+    isApproved: { type: Boolean, default: false },
+    sellerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true } // 👈 Reference to seller (User)
   },
   { timestamps: true }
 );

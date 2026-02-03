@@ -4,6 +4,7 @@
  */
 
 const Gem = require('../models/gem');
+const User = require('../models/User');
 const cloudinary = require('cloudinary').v2;
 const { Readable } = require('stream');
 
@@ -159,4 +160,37 @@ const createGem = async (req, res) => {
   }
 };
 
-module.exports = { getGems, getLatestGems, createGem, approveGem };
+// Get seller details by gem ID (for "Contact Now" button)
+const getSellerByGemId = async (req, res) => {
+  try {
+    const { gemId } = req.params;
+
+    // Find gem and populate seller details
+    const gem = await Gem.findById(gemId).populate('sellerId', 'name email profileImage');
+
+    if (!gem) {
+      return res.status(404).json({ message: "Gem not found" });
+    }
+
+    if (!gem.sellerId) {
+      return res.status(404).json({ message: "Seller information not available" });
+    }
+
+    // Return seller details
+    res.json({
+      gemId: gem._id,
+      gemName: gem.name,
+      seller: {
+        _id: gem.sellerId._id,
+        name: gem.sellerId.name,
+        email: gem.sellerId.email,
+        profileImage: gem.sellerId.profileImage
+      }
+    });
+  } catch (error) {
+    console.error("GET SELLER ERROR:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+module.exports = { getGems, getLatestGems, createGem, approveGem, getSellerByGemId };
