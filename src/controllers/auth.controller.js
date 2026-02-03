@@ -130,3 +130,65 @@ exports.getUserById = async (req, res, next) => {
     next(err);
   }
 };
+
+// Update user profile (name, email)
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const { name, email } = req.body;
+    
+    // 1. Find the user using the ID attached by the verifyToken middleware
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // 2. Apply the new values
+    user.name = name || user.name;
+    user.email = email || user.email;
+
+    // 3. CRITICAL: You must await the save() call
+    const updatedUser = await user.save();
+
+    // 4. Return the updated data (exclude password)
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        createdAt: updatedUser.createdAt
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Change password
+exports.changePassword = async (req, res, next) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify old password
+    const ok = await bcrypt.compare(oldPassword, user.password);
+    if (!ok) {
+      return res.status(401).json({ message: "Old password is incorrect" });
+    }
+
+    // Hash new password
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password = hashed;
+    await user.save();
+
+    res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    next(err);
+  }
+};

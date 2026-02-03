@@ -15,6 +15,17 @@ const getGems = async (req, res) => {
   }
 };
 
+// Get latest gems for homepage
+const getLatestGems = async (req, res) => {
+  try {
+    // Sort by createdAt descending (-1) and limit to 4
+    const gems = await Gem.find({}).sort({ createdAt: -1 }).limit(4);
+    res.json(gems);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
 // Create and save a new gem product
 const createGem = async (req, res) => {
   const { name, carat, clarity, origin, price, countInStock, imageUrl, description } = req.body;
@@ -31,4 +42,4 @@ const createGem = async (req, res) => {
   }
 };
 
-module.exports = { getGems, createGem };
+module.exports = { getGems, getLatestGems, createGem };

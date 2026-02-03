@@ -9,6 +9,8 @@ const {
   register, 
   login, 
   getProfile,
+  updateProfile,
+  changePassword,
   updateUserRole,
   getAllUsers,
   getUserById
@@ -22,6 +24,8 @@ router.post("/login", login);
 
 // Protected routes - requires authentication
 router.get("/profile", verifyToken, getProfile);
+router.put("/profile", verifyToken, updateProfile);
+router.put("/change-password", verifyToken, changePassword);
 router.get("/user/:userId", verifyToken, getUserById);
 
 // Admin routes - requires admin role
