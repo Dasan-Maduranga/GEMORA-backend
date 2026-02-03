@@ -16,7 +16,7 @@ router.get("/", optionalToken, getGems);
 router.get("/latest", getLatestGems);
 
 // Create a new gem - with image upload support (up to 5 images)
-router.post("/", verifyToken, authorize(["admin", "user"]), upload.array("images", 5), createGem);
+router.post("/", verifyToken, authorize(["admin", "user"]), upload.array("image", 5), createGem);
 
 // 🔹 Admin-only route to approve gems
 router.put("/:id/approve", verifyToken, authorize(["admin"]), approveGem);

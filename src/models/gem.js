@@ -1,6 +1,6 @@
 /**
  * Gem model
- * Defines schema for gemstone products with properties and inventory
+ * Defines schema for gemstone products with admin approval
  */
 
 const mongoose = require("mongoose");
@@ -13,8 +13,9 @@ const gemSchema = new mongoose.Schema(
     origin: { type: String },
     price: { type: Number, required: true },
     countInStock: { type: Number, required: true, default: 1 },
-    imageUrl: { type: String },
-    description: { type: String }
+    images: [{ type: String }], // 👈 Array of image URLs
+    description: { type: String },
+    isApproved: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

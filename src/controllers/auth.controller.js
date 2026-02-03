@@ -6,6 +6,35 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const cloudinary = require('cloudinary').v2;
+const { Readable } = require('stream');
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Helper function to upload buffer to Cloudinary
+const uploadToCloudinary = (buffer, filename) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "gemora-profiles",
+        public_id: filename.split('.')[0],
+        resource_type: "auto",
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result.secure_url);
+      }
+    );
+    
+    const readable = Readable.from(buffer);
+    readable.pipe(stream);
+  });
+};
 
 // Generate JWT token for authenticated user
 const signToken = (userId) =>
@@ -190,5 +219,48 @@ exports.changePassword = async (req, res, next) => {
     res.json({ message: "Password changed successfully" });
   } catch (err) {
     next(err);
+  }
+};
+// Upload profile image
+exports.uploadProfileImage = async (req, res, next) => {
+  try {
+    console.log("🔍 [uploadProfileImage] User:", req.user._id);
+    console.log("🔍 [uploadProfileImage] File uploaded:", req.file ? "yes" : "no");
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No image provided" });
+    }
+
+    console.log("📸 [uploadProfileImage] Uploading profile image to Cloudinary...");
+
+    // Upload to Cloudinary
+    const imageUrl = await uploadToCloudinary(req.file.buffer, req.file.originalname);
+    console.log("✅ [uploadProfileImage] Image uploaded:", imageUrl);
+
+    // Update user with profile image
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { profileImage: imageUrl },
+      { new: true }
+    ).select("-password");
+
+    console.log("✅ [uploadProfileImage] Profile image updated for user:", req.user._id);
+
+    res.json({
+      message: "Profile image uploaded successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        profileImage: user.profileImage,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error("❌ [uploadProfileImage] ERROR:", error);
+    res.status(400).json({
+      message: "Failed to upload profile image",
+      error: error.message
+    });
   }
 };

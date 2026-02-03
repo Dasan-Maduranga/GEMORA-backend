@@ -13,7 +13,8 @@ const toolSchema = new mongoose.Schema(
     price: { type: Number, required: true },
     countInStock: { type: Number, required: true, default: 0 },
     description: { type: String },
-    imageUrl: { type: String },
+    imageUrl: { type: String }, // Backward compatibility
+    images: [{ type: String }], // 👈 Array of image URLs
     status: {
       type: String,
       enum: ['Pending', 'Approved', 'Rejected'],

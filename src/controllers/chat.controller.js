@@ -5,8 +5,6 @@
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 // Process user message and return AI-generated response
 exports.askBot = async (req, res) => {
   try {
@@ -21,6 +19,9 @@ exports.askBot = async (req, res) => {
     if (!process.env.GEMINI_API_KEY) {
       return res.status(500).json({ message: "Chat failed", error: "API key not configured" });
     }
+
+    // Initialize Gemini client per request to pick up fresh env changes
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
     // Initialize Gemini model
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -48,11 +49,22 @@ exports.askBot = async (req, res) => {
     res.json({ success: true, reply: text });
   } catch (error) {
     // Log error and return error response
-    console.error("Chat Error:", error.message);
-    res.status(500).json({ 
-      message: "Chat failed", 
-      error: error.message,
-      success: false 
+    const errorMessage = error?.message || "Unknown error";
+    console.error("Chat Error:", errorMessage);
+
+    // Handle leaked/invalid API key (403)
+    if (errorMessage.includes("403") || errorMessage.toLowerCase().includes("leaked")) {
+      return res.status(503).json({
+        message: "Chat unavailable",
+        error: "Gemini API key is invalid or revoked. Please rotate the key.",
+        success: false
+      });
+    }
+
+    res.status(500).json({
+      message: "Chat failed",
+      error: errorMessage,
+      success: false
     });
   }
 };
