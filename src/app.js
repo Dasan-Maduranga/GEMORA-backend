@@ -9,6 +9,8 @@ const authRoutes = require("./routes/auth.routes");
 const gemRoutes = require("./routes/gem.routes");
 const toolRoutes = require("./routes/tool.routes");
 const chatRoutes = require("./routes/chat.routes");
+const newsRoutes = require("./routes/news.routes");
+const orderRoutes = require("./routes/order.routes");
 const errorMiddleware = require("./middleware/error.middleware");
 
 const app = express();
@@ -16,7 +18,7 @@ const app = express();
 // 🔴 THE FIX: Robust CORS Configuration
 // This allows both localhost variations and specific headers
 app.use(cors({
-  origin: ["http://localhost:5173", "http://127.0.0.1:5173"], 
+  origin: ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5001", "http://127.0.0.1:5001"], 
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
@@ -34,6 +36,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/gems", gemRoutes);
 app.use("/api/tools", toolRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/news", newsRoutes);
+app.use("/api/orders", orderRoutes);
 
 // Global error handling middleware
 app.use(errorMiddleware);
