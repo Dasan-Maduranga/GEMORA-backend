@@ -5,17 +5,20 @@
 
 const express = require("express");
 const router = express.Router();
-const { getGems, getLatestGems, createGem } = require("../controllers/gemController");
+const { getGems, getLatestGems, createGem, approveGem } = require("../controllers/gemController");
 const { verifyToken, optionalToken } = require("../middleware/auth.middleware");
 const { authorize } = require("../middleware/authorization.middleware");
+const upload = require("../middleware/multer");
 
-// Retrieve all gems - public or authenticated
+// Retrieve gems (optionalToken populated req.user for the admin check)
 router.get("/", optionalToken, getGems);
 
-// Get latest gems for homepage
 router.get("/latest", getLatestGems);
 
-// Create a new gem - requires authentication, admin or user can create
-router.post("/", verifyToken, authorize(["admin", "user"]), createGem);
+// Create a new gem - with image upload support (up to 5 images)
+router.post("/", verifyToken, authorize(["admin", "user"]), upload.array("images", 5), createGem);
+
+// 🔹 Admin-only route to approve gems
+router.put("/:id/approve", verifyToken, authorize(["admin"]), approveGem);
 
 module.exports = router;
