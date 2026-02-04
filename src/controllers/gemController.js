@@ -106,7 +106,9 @@ const createGem = async (req, res) => {
     console.log("🔍 [createGem] User:", req.user ? `${req.user._id} (${req.user.role})` : "NOT AUTHENTICATED");
     console.log("🔍 [createGem] Files uploaded:", req.files ? req.files.length : 0);
 
-    const { name, carat, clarity, origin, price, countInStock, description } = req.body;
+    const { name, carat, clarity, origin, price, countInStock, description , phoneNumber } = req.body;
+
+    console.log("📝 [createGem] Creating gem with data:", { name, carat, clarity, origin, price, countInStock, description , phoneNumber});
 
     // Check authentication
     if (!req.user) {
@@ -120,8 +122,8 @@ const createGem = async (req, res) => {
     }
 
     // Validate required fields
-    if (!name || !carat || !price) {
-      console.warn("⚠️ [createGem] Missing required fields:", { name, carat, price });
+    if (!name || !carat) {
+      console.warn("⚠️ [createGem] Missing required fields:", { name, carat });
       return res.status(400).json({ message: "Name, carat, and price are required" });
     }
 
@@ -144,13 +146,14 @@ const createGem = async (req, res) => {
     }
 
     console.log("📝 [createGem] Creating gem with", imageUrls.length, "images");
+    console.log("before saving... ", req.body)
 
     const gem = new Gem({
       name,
-      carat,
+      carat : parseInt(carat),
       clarity,
       origin,
-      price,
+      phoneNumber,
       countInStock,
       description,
       images: imageUrls, // 👈 Array of Cloudinary URLs
