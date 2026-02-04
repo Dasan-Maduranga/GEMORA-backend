@@ -80,12 +80,13 @@ exports.getOrderById = async (req, res) => {
   }
 };
 
-// Get logged in user's orders
+// Get logged in user's orders (Admins see all orders)
 exports.getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id }).sort({
-      createdAt: -1,
-    });
+    const query = req.user.role === "admin" ? {} : { user: req.user._id };
+    const orders = await Order.find(query)
+      .populate("user", "name email")
+      .sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -110,7 +111,17 @@ exports.getAllOrders = async (req, res) => {
 // Update order status (Admin only)
 exports.updateOrderStatus = async (req, res) => {
   try {
-    const { orderStatus } = req.body;
+    const { status, orderStatus } = req.body;
+    const nextStatus = status ?? orderStatus;
+
+    if (!nextStatus) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const allowedStatuses = ["Processing", "Shipped", "Delivered", "Cancelled"];
+    if (!allowedStatuses.includes(nextStatus)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
 
     const order = await Order.findById(req.params.id);
 
@@ -118,17 +129,17 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    order.orderStatus = orderStatus;
+    order.orderStatus = nextStatus;
 
-    if (orderStatus === "Delivered") {
+    if (nextStatus === "Delivered") {
       order.isDelivered = true;
       order.deliveredAt = Date.now();
     }
 
     const updatedOrder = await order.save();
-    res.json(updatedOrder);
+    res.status(200).json(updatedOrder);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Update failed", error: error.message });
   }
 };
 
@@ -147,6 +158,21 @@ exports.updateOrderPayment = async (req, res) => {
 
     const updatedOrder = await order.save();
     res.json(updatedOrder);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete an order (Admin only)
+exports.deleteOrder = async (req, res) => {
+  try {
+    const order = await Order.findByIdAndDelete(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.status(200).json({ message: "Order deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

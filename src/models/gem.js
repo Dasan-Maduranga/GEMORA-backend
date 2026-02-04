@@ -16,7 +16,12 @@ const gemSchema = new mongoose.Schema(
     images: [{ type: String }], // 👈 Array of image URLs
     description: { type: String },
     isApproved: { type: Boolean, default: false },
-    sellerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true } // 👈 Reference to seller (User)
+    status: {
+      type: String,
+      enum: ['Pending', 'Approved', 'Rejected'],
+      default: 'Pending'
+    },
+    sellerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } // 👈 Reference to seller (User) - optional for existing gems
   },
   { timestamps: true }
 );

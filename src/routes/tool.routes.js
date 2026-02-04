@@ -5,7 +5,7 @@
 
 const express = require("express");
 const router = express.Router();
-const { getTools, createTool, updateToolStatus } = require("../controllers/tool.controller");
+const { getTools, createTool, updateToolStatus, bulkApproveTools } = require("../controllers/tool.controller");
 const { verifyToken, optionalToken } = require("../middleware/auth.middleware");
 const { authorize, adminOnly } = require("../middleware/authorization.middleware");
 const upload = require("../middleware/multer");
@@ -18,5 +18,8 @@ router.post("/", verifyToken, authorize(["admin", "user"]), upload.array("image"
 
 // Update tool status - user or admin
 router.put("/:id/status", verifyToken, authorize(["admin", "user"]), updateToolStatus);
+
+// Bulk approve all pending tools (Admin only)
+router.put("/bulk/approve", verifyToken, authorize(["admin"]), bulkApproveTools);
 
 module.exports = router;

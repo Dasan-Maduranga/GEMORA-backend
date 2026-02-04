@@ -12,6 +12,7 @@ const {
   getAllOrders,
   updateOrderStatus,
   updateOrderPayment,
+  deleteOrder,
 } = require("../controllers/order.controller");
 const { verifyToken } = require("../middleware/auth.middleware");
 const { authorize } = require("../middleware/authorization.middleware");
@@ -19,6 +20,7 @@ const { authorize } = require("../middleware/authorization.middleware");
 // Admin routes - must come before /:id route
 router.get("/", verifyToken, authorize(["admin"]), getAllOrders);
 router.put("/:id/status", verifyToken, authorize(["admin"]), updateOrderStatus);
+router.delete("/:id", verifyToken, authorize(["admin"]), deleteOrder);
 
 // User routes - requires authentication
 router.post("/", verifyToken, createOrder);

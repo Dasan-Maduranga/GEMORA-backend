@@ -5,7 +5,7 @@
 
 const express = require("express");
 const router = express.Router();
-const { getGems, getLatestGems, createGem, approveGem, getSellerByGemId } = require("../controllers/gemController");
+const { getGems, getLatestGems, createGem, approveGem, getSellerByGemId, bulkApproveGems, updateGemStatus } = require("../controllers/gemController");
 const { verifyToken, optionalToken } = require("../middleware/auth.middleware");
 const { authorize } = require("../middleware/authorization.middleware");
 const upload = require("../middleware/multer");
@@ -19,9 +19,15 @@ router.get("/latest", getLatestGems);
 router.get("/:gemId/seller", getSellerByGemId);
 
 // Create a new gem - with image upload support (up to 5 images)
-router.post("/", verifyToken, authorize(["admin", "user"]), upload.array("image", 5), createGem);
+router.post("/", verifyToken, authorize(["admin", "user"]), upload.array("images", 5), createGem);
 
-// 🔹 Admin-only route to approve gems
+// Update gem status (Pending/Approved/Rejected) - Admin or User
+router.put("/:id/status", verifyToken, authorize(["admin", "user"]), updateGemStatus);
+
+// 🔹 Admin-only route to approve gems (backward compatibility)
 router.put("/:id/approve", verifyToken, authorize(["admin"]), approveGem);
+
+// 🔹 Bulk approve all gems (Admin only)
+router.put("/bulk/approve", verifyToken, authorize(["admin"]), bulkApproveGems);
 
 module.exports = router;

@@ -41,12 +41,20 @@ const getGems = async (req, res) => {
     // If admin is logged in, show all. Otherwise, only show approved gems.
     const query = req.user && req.user.role === 'admin' ? {} : { isApproved: true };
     
-    const gems = await Gem.find(query);
+    const gems = await Gem.find(query).populate('sellerId', 'name email profileImage');
     
     // 🔹 Map through gems and ensure "images" always exists as an array
     const sanitizedGems = gems.map(gem => {
       const g = gem.toObject();
       if (!g.images) g.images = g.imageUrl ? [g.imageUrl] : [];
+      delete g.price;
+      if (!g.sellerId) {
+        g.sellerId = {
+          name: "Gemora Certified Partner",
+          email: "support@gemora.com",
+          profileImage: "https://via.placeholder.com/150"
+        };
+      }
       return g;
     });
 
@@ -60,12 +68,13 @@ const getGems = async (req, res) => {
 const getLatestGems = async (req, res) => {
   try {
     // Only show latest 4 APPROVED gems for the homepage
-    const gems = await Gem.find({ isApproved: true }).sort({ createdAt: -1 }).limit(4);
+    const gems = await Gem.find({ isApproved: true }).populate('sellerId', 'name email profileImage').sort({ createdAt: -1 }).limit(4);
 
     // 🔹 Ensure images array always exists
     const sanitizedGems = gems.map(gem => {
       const g = gem.toObject();
       if (!g.images) g.images = g.imageUrl ? [g.imageUrl] : [];
+      delete g.price;
       return g;
     });
 
@@ -145,6 +154,7 @@ const createGem = async (req, res) => {
       countInStock,
       description,
       images: imageUrls, // 👈 Array of Cloudinary URLs
+      sellerId: req.user._id, // 👈 Set current user as seller
       isApproved: req.user.role === 'admin' 
     });
 
@@ -172,20 +182,27 @@ const getSellerByGemId = async (req, res) => {
       return res.status(404).json({ message: "Gem not found" });
     }
 
-    if (!gem.sellerId) {
-      return res.status(404).json({ message: "Seller information not available" });
+    // If seller info exists, return it with gem details
+    if (gem.sellerId) {
+      return res.json({
+        gemId: gem._id,
+        gemName: gem.name,
+        seller: {
+          _id: gem.sellerId._id,
+          name: gem.sellerId.name,
+          email: gem.sellerId.email,
+          profileImage: gem.sellerId.profileImage
+        }
+      });
     }
 
-    // Return seller details
+    // For old gems without seller info, return gem details with a message
+    console.log("⚠️ [getSellerByGemId] Gem has no seller:", gem.name);
     res.json({
       gemId: gem._id,
       gemName: gem.name,
-      seller: {
-        _id: gem.sellerId._id,
-        name: gem.sellerId.name,
-        email: gem.sellerId.email,
-        profileImage: gem.sellerId.profileImage
-      }
+      seller: null,
+      message: "Seller information not available. Please contact support at support@gemora.com"
     });
   } catch (error) {
     console.error("GET SELLER ERROR:", error);
@@ -193,4 +210,46 @@ const getSellerByGemId = async (req, res) => {
   }
 };
 
-module.exports = { getGems, getLatestGems, createGem, approveGem, getSellerByGemId };
+// Update gem status (Pending/Approved/Rejected) - Admin or Owner
+const updateGemStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    
+    // Validate status
+    if (!['Pending', 'Approved', 'Rejected'].includes(status)) {
+      return res.status(400).json({ message: "Invalid status. Must be Pending, Approved, or Rejected" });
+    }
+    
+    const gem = await Gem.findByIdAndUpdate(
+      req.params.id,
+      { status: status, isApproved: status === 'Approved' }, // Keep backward compatibility
+      { new: true }
+    );
+    
+    if (!gem) return res.status(404).json({ message: "Gem not found" });
+    res.json(gem);
+  } catch (error) {
+    console.error("UPDATE GEM STATUS ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Bulk approve all unapproved gems (Admin only)
+const bulkApproveGems = async (req, res) => {
+  try {
+    const result = await Gem.updateMany(
+      { $or: [{ isApproved: false }, { status: 'Pending' }] },
+      { isApproved: true, status: 'Approved' }
+    );
+    
+    res.json({ 
+      message: `Successfully approved ${result.modifiedCount} gems`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error("BULK APPROVE ERROR:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+module.exports = { getGems, getLatestGems, createGem, approveGem, getSellerByGemId, bulkApproveGems, updateGemStatus };

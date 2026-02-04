@@ -37,7 +37,10 @@ const uploadToCloudinary = (buffer, filename) => {
 // Retrieve all tools from database
 const getTools = async (req, res) => {
   try {
-    const tools = await Tool.find({});
+    // If admin is logged in, show all. Otherwise, only show approved tools.
+    const query = req.user && req.user.role === 'admin' ? {} : { status: 'Approved' };
+    
+    const tools = await Tool.find(query);
     
     // 🔹 Ensure images array always exists
     const sanitizedTools = tools.map(tool => {
@@ -48,6 +51,7 @@ const getTools = async (req, res) => {
     
     res.json(sanitizedTools);
   } catch (error) {
+    console.error("GET TOOLS ERROR:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };
@@ -130,4 +134,22 @@ const updateToolStatus = async (req, res) => {
   }
 };
 
-module.exports = { getTools, createTool, updateToolStatus };
+// Bulk approve all pending tools (Admin only)
+const bulkApproveTools = async (req, res) => {
+  try {
+    const result = await Tool.updateMany(
+      { status: 'Pending' },
+      { status: 'Approved' }
+    );
+    
+    res.json({ 
+      message: `Successfully approved ${result.modifiedCount} tools`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error("BULK APPROVE TOOLS ERROR:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+module.exports = { getTools, createTool, updateToolStatus, bulkApproveTools };
