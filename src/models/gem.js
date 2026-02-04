@@ -11,8 +11,9 @@ const gemSchema = new mongoose.Schema(
     carat: { type: Number, required: true },
     clarity: { type: String },
     origin: { type: String },
-    price: { type: Number, required: true },
-    countInStock: { type: Number, required: true, default: 1 },
+    phoneNumber: { type: String, required: true },
+    // price: { type: Number, required: true },
+    countInStock: { type: Number, required: true, },
     images: [{ type: String }], // 👈 Array of image URLs
     description: { type: String },
     isApproved: { type: Boolean, default: false },

@@ -106,7 +106,7 @@ const createGem = async (req, res) => {
     console.log("🔍 [createGem] User:", req.user ? `${req.user._id} (${req.user.role})` : "NOT AUTHENTICATED");
     console.log("🔍 [createGem] Files uploaded:", req.files ? req.files.length : 0);
 
-    const { name, carat, clarity, origin, price, countInStock, description } = req.body;
+    const { name, carat, clarity, origin, phoneNumber, countInStock, description } = req.body;
 
     // Check authentication
     if (!req.user) {
@@ -120,9 +120,9 @@ const createGem = async (req, res) => {
     }
 
     // Validate required fields
-    if (!name || !carat || !price) {
-      console.warn("⚠️ [createGem] Missing required fields:", { name, carat, price });
-      return res.status(400).json({ message: "Name, carat, and price are required" });
+    if (!name || !carat || !phoneNumber) {
+      console.warn("⚠️ [createGem] Missing required fields:", { name, carat, phoneNumber });
+      return res.status(400).json({ message: "Name, carat, and phone number are required" });
     }
 
     console.log("📸 [createGem] Uploading", req.files.length, "images to Cloudinary...");
@@ -150,7 +150,7 @@ const createGem = async (req, res) => {
       carat,
       clarity,
       origin,
-      price,
+      phoneNumber,
       countInStock,
       description,
       images: imageUrls, // 👈 Array of Cloudinary URLs

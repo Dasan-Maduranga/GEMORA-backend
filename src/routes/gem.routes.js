@@ -21,6 +21,8 @@ router.get("/:gemId/seller", getSellerByGemId);
 // Create a new gem - with image upload support (up to 5 images)
 router.post("/", verifyToken, authorize(["admin", "user"]), upload.array("images", 5), createGem);
 
+// router.post("/add-gems",)
+
 // Update gem status (Pending/Approved/Rejected) - Admin or User
 router.put("/:id/status", verifyToken, authorize(["admin", "user"]), updateGemStatus);
 
